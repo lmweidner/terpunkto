@@ -1,9 +1,14 @@
 # terpunkto
-Calculate point cloud descriptors for machine learning
+Calculate point cloud descriptors for machine learning.
+
+This code is intended to be a plug and play program for calculating a variety of point cloud geometric and color features in MATLAB. This functions similarly to CloudCompare, but with the added ability to:
+- calculate color and intensity statistics, 
+- handle balanced sampling of labeled point clouds automatically, and 
+- interface directly with machine learning workflows in MATLAB without needing to load the features from CloudCompare
 
 Point cloud descriptors are very useful for classification and segmentation tasks, but for those without a strong background in computer science it can be difficult and time-consuming to code application-specific features. Terpunkto is a function that calculates some simple neighborhood desciptors in multiple spherical radii, including geometric (e.g. omnivariance, eigentropy, etc.), slope (i.e. normal vector), color, and texture. The user can specify the set of radii and set of features to be calculated. 
 
-These features were originally intended for geoscience research applications and therefore computational efficiency and point density variation are not major concerns, although the neighborhood search method could be modified without too much difficulty using e.g. a heirarchical subsampling scheme to mitigate any potential issues caused by this.
+These features were originally intended for geoscience research applications and therefore computational efficiency and point density variation are not major concerns. However, I also added the ability to use heirarchical subsampling features, which somewhat restricts the features that can be calculated and reduces accuracy a bit, but in exchange is much much faster and less sensitive to variations in point density.
 
 This code was used in the following publications:
 

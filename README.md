@@ -7,7 +7,7 @@ These features were originally intended for geoscience research applications and
 
 This code was used in the following publications:
 
-Weidner, L., Walton, G., 2020. Monitoring and Modeling of the DeBeque Canyon Landslide Complex in Three Dimensions. Presented at the 54th U.S. Rock Mechanics/Geomechanics Symposium, American Rock Mechanics Association.
+Weidner, L., Walton, G., Krajnovich, A., 2021. Classifying rock slope materials in photogrammetric point clouds using robust color and geometric features. ISPRS Journal of Photogrammetry and Remote Sensing 176, 15–29. https://doi.org/10.1016/j.isprsjprs.2021.04.001
 
 Weidner, Luke, Walton, G., Kromer, R., 2020. Generalization considerations and solutions for point cloud hillslope classifiers. Geomorphology 107039. https://doi.org/10.1016/j.geomorph.2020.107039
 

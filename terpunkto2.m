@@ -100,17 +100,21 @@ newslangs(dz>0)=real(90-acosd((dx(dz>0).^2+dy(dz>0).^2)./sqrt(dx(dz>0).^2+dy(dz>
 disp('calculated slope')
 %% Convert RGB colors to HSV and LAB color spaces
 waitbar(0.4,f,'converting colors...');
-if colorflag == 1
+tp_orig = pointCloud(pts_orig(:,[xind,yind,zind]),'Normal',[dx,dy,dz]);
+if colorflag
     
     RGB=pts_orig(:,[rind,gind,bind])./255;
     
     LAB=rgb2lab(RGB);
-    tp_orig=pointCloud(pts_orig(:,[xind,yind,zind]),'Color',RGB,'Normal',[dx,dy,dz]);
+    LAB(:,2) = LAB(:,2)+100; %shift the AB zero point to +100 to preserve the negative values when converting to uint8
+    LAB(:,3) = LAB(:,3)+100;
+    
+    tp_orig.Color = uint8(LAB);
 end
 
-if intensityflag == 1
+if intensityflag
     intensities = pts_orig(:,intensity_ind);
-    tp_orig=pointCloud(pts_orig(:,[xind,yind,zind]),'Intensity',intensities,'Normal',[dx,dy,dz]);
+    tp_orig.Intensity = intensities;
 end
 
 disp('converted colors')

@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Jan 21 10:06:00 2022
-
 @author: LWeidner
 """
 
 import numpy as np
 import cloudComPy as cc
 import time
-import colorsys
+# import colorsys
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn. impute import SimpleImputer
 from imblearn.under_sampling import RandomUnderSampler
+from skimage.color import rgb2lab
 cc.initCC()  # to do once before using plugins or dealing with numpy
 
 
 # %%
-fp = R'C:\Users\lweidner\OneDrive - BGC Engineering Inc\Projects\Zion NP\CableMnt.bin'
+fp = R'Z:\PersonalShare\Luke\terpunkto\Python\Slope3.bin'
 cloud = cc.loadPointCloud(fp)
 print('...loaded cloud with size: ',cloud.size())
-radii = [1.5,1.0,0.5]
-minDistDownsample = 0.4
+radii = [3,1.5,0.75]
+minDistDownsample = 0.3
 useColor = 1
 useGeometry = 1
 # %% downsample raw point cloud using min space between points
@@ -34,13 +34,18 @@ octree = subsampledCloud.computeOctree()
 print('...downsampled cloud and computed octree, new cloud has size: ',subsampledCloud.size())
 labelSf = subsampledCloud.getScalarField(0)
 label = labelSf.toNpArrayCopy()
-# %% convert colors from RGB to HSV
+# %% convert colors from RGB to HSV (or LAB, let's see if it works)
 if useColor:
-    colRGB = subsampledCloud.colorsToNpArrayCopy()[:,0:3]/255
-    colHSV=np.empty_like(colRGB)
-    for i,row in enumerate(colRGB):
-        colHSV[i,:]=colorsys.rgb_to_hsv(row[0],row[1],row[2])
-    print('...converted colors from RGB to HSV')
+    colRGB = subsampledCloud.colorsToNpArrayCopy()[:,0:3]
+    # colHSV=np.empty_like(colRGB)
+    # for i,row in enumerate(colRGB):
+    #     colHSV[i,:]=colorsys.rgb_to_hsv(row[0],row[1],row[2])
+    colLAB=np.empty_like(colRGB)    
+    colLAB = rgb2lab(colRGB,channel_axis=1)
+        
+        
+        
+    print('...converted colors from RGB to LAB')
 # %% calculate features
 if useGeometry:
     print('...starting feature calculation (this will take several minutes)')
@@ -67,7 +72,7 @@ for i in range(nsf):
 allSf = np.vstack(sfs).transpose()[:,1:] # the first scalar is the label and is excluded
 
 if useColor:
-    DataMatrix = np.hstack([allSf,colHSV])
+    DataMatrix = np.hstack([allSf,colLAB])
     print(np.shape(DataMatrix))
 else:
     DataMatrix = np.copy(allSf)
@@ -85,23 +90,26 @@ labeledData = DataMatrix[hasLabel,:]
 imp1 = SimpleImputer(missing_values=np.nan, strategy='mean').fit(labeledData)
 data_imp = imp1.transform(labeledData)
 
+print('...undersampling')
 rus = RandomUnderSampler(random_state=0,sampling_strategy='auto')
 X_resampled, y_resampled = rus.fit_resample(data_imp, labeledLabels)
 
+print('...training Random Forest')
 # train shallow neural network
 # nn = MLPClassifier(hidden_layer_sizes=(20,5),max_iter=300,early_stopping=True).fit(X_resampled,y_resampled)
-nn = RandomForestClassifier().fit(X_resampled,y_resampled)
+nn = RandomForestClassifier(verbose=1,n_jobs=-1).fit(X_resampled,y_resampled)
 
 # fill nans in main cloud data
 imp2 = SimpleImputer(missing_values=np.nan, strategy='mean').fit(DataMatrix)
 outFeatures = imp2.transform(DataMatrix)
 
+print('...predicting outputs')
 fullCloudLabel = nn.predict(outFeatures)
 LabelProbs = nn.predict_proba(outFeatures)
-
+Confidence = np.max(LabelProbs,axis=1)
 # %% convert results to scalar fields and write output cloud
 
-
+print('...writing results to BIN file')
 nClasses = np.size(np.unique(labeledLabels))
 
 for iClass in range(nClasses):
@@ -112,8 +120,11 @@ for iClass in range(nClasses):
     
 classInd=subsampledCloud.addScalarField('Predicted Label')
 sf = subsampledCloud.getScalarField(classInd)
-sf.fromNpArrayCopy(fullCloudLabel)   
+sf.fromNpArrayCopy(fullCloudLabel)  
 
-res = cc.SavePointCloud(subsampledCloud,R'C:\Users\lweidner\OneDrive - BGC Engineering Inc\Code\nnPred.bin')
+confInd=subsampledCloud.addScalarField('Confidence')
+sf = subsampledCloud.getScalarField(confInd)
+sf.fromNpArrayCopy(np.float32(Confidence))
+
+res = cc.SavePointCloud(subsampledCloud,R'Z:\PersonalShare\Luke\terpunkto\Python\Slope3Pred.bin')
 print('saved cloud with result ',res)
-
